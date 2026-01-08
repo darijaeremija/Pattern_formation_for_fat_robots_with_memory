@@ -1,0 +1,201 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+
+\usepackage[utf8x,utf8]{inputenc} 
+\usepackage[serbian]{babel}
+\usepackage[T1]{fontenc}
+
+
+
+\usepackage[]{algorithm2e}
+\renewcommand{\algorithmcfname}{Algoritam}
+
+
+\usepackage{cite}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{float}
+
+\usepackage{amsthm}
+\newtheorem{theorem}{Teorema}
+
+\usepackage[a4paper,margin=2.2cm]{geometry}
+
+
+
+\title{Formiranje obrazaca kod debelih robota sa ograničenom memorijom}
+\author{
+\normalsize{Darija Eremija 1032/2025} \\
+\normalsize Matematički fakultet, Univerzitet u Beogradu 
+}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+U ovom seminarskom radu razmatra se problem formiranja obrazaca za robote sa fizičkom dimenzijom (,,debele robote'') u uslovima zaklonjene vidljivosti, kako je predstavljen u radu \textit{Pattern formation for fat robots with memory}. Fokus je na osnovnoj ideji algoritma koji rešava ovaj problem bez sudaranja i bez potrebe za znanjem o ukupnom broju robota u sistemu. Predloženo rešenje sastoji se iz tri faze: uspostavljanja međusobne vidljivosti, izbora jednog robota za vođu i konačnog formiranja ciljnog obrasca. Pokazano je da da se algoritam završava u $O(n) + O(q \log n)$ rundi sa verovatnoćom uspešnog izvršavanja najmanje $1 - n^{-q}$, uz korišćenje konstantne količine memorije po robotu, gde je $n$ broj robota,a $q>0$ je proizvoljna konstanta kojom se kontroliše verovatnoća uspešnog izvršavanja algoritma.
+
+\end{abstract}
+
+\tableofcontents
+
+\section{Uvod}
+
+Rad \textit{Pattern formation for fat robots with memory} objavljen je 2025. godine u časopisu \textit{Computational Geometry: Theory and Applications} \cite{Alsaedi}. Autori rada su Rusul J. Alsaedi, Joachim Gudmundsson i André van Renssen, svi sa Univerziteta u Sidneju (The University of Sydney, Australia).
+
+Tema ovog rada je problem formiranja obrasca u sistemima autonomnih mobilnih robota. Cilj je da se skup robota, polazeći od proizvoljnog početnog rasporeda u ravni, premesti u unapred zadati obrazac. Roboti ne smeju da se sudaraju, nemaju mogućnost direktne komunikacije (nemi su), nemaju informacije o ukupnom broju robota u sistemu i rade u uslovima zaklonjene vidljivosti.
+
+Cilj ovog seminarskog rada jeste da jasno i sažeto prikaže problem, algoritam i značaj navedenog rada, kao i njegove moguće primene i odnos sa prethodnim srodnim radovima.
+
+Napomena: U nastavku, složenost algoritma izražena je u broju sinhronih rundi izvršavanja.
+
+
+\section{Opis problema i model robota}
+
+Sistem se sastoji od skupa robota u euklidskoj ravni. Svaki robot ima oblik diska jedinične veličine. Roboti su anonimni, ne mogu direktno komunicirati, nemaju ujednačen koordinatni sistem i ne znaju ukupan broj robota. Svi roboti imaju ograničenu količinu memorije i izvršavaju isti algoritam.
+
+U svakom trenutku robot može biti aktivan ili neaktivan. Kada je robot aktivan izvršava niz sledećih operacija:
+\begin{enumerate}
+    \item \textbf{Pogledaj} (eng. \textit{Look}) - Robot posmatra položaje robota koje vidi.
+    \item \textbf{Izračunaj} (eng. \textit{Compute}) - Na osnovu toga izračunava svoju odredišnu tačku.
+    \item \textbf{Pomeri se} (eng. \textit{Move}) - Robot se pomera ka izračunatoj tački.
+\end{enumerate}
+
+
+Roboti poseduju fizičku dimenziju i mogu međusobno da zaklanjaju vidljivost. Kažemo da robot vidi drugi robot ako i samo ako se između njih, na duži koja ih spaja, ne nalazi nijedan treći robot. Ovakav uslov naziva se \textit{zaklonjena vidljivost} i predstavlja jedno od glavnih ograničenja razmatranog problema.
+
+Problem formiranja obrazaca sastoji se u tome da roboti, od proizvoljnih početnih položaja u ravni, treba da se rasporede tako da formiraju zadati obrazac. Tokom celog procesa ne sme doći do sudara između robota. Do sudara dolazi ako u bilo kom trenutku dva robota zauzimu istu poziciju. Ciljni obrazac je uspešno formiran, ako se može dobiti dozvoljenim transformacijama: rotacijom, skaliranjem, translacijom i refleksijom.
+
+\section{Algoritam i glavni rezultati}
+
+Sledeći pseudokod ilustruje osnovni tok algoritma i njegove glavne faze: postizanje međusobne vidljivosti, biranje vođe i konačno formiranje obrasca. U nastavku će biti prikazana suština svake od ovih faza. \\
+
+\begin{algorithm}[H]
+\caption{Formiranje ciljnog obrasca za debele robote}
+\KwIn{Skup robota sa proizvoljnim početnim položajima}
+\KwOut{Roboti formiraju zadati ciljni obrazac}
+
+\textbf{Faza 1: Uspostavljanje međusobne vidljivosti}
+
+\While{nije postignuta međusobna vidljivost}{
+    za svakog robota odredi da li je \textit{ugaoni} ili \textit{unutrašnji}\;
+    unutrašnji roboti biraju sebi najbližu ivicu konveksnog omotača i pomeraju se ka njoj\;
+    ugaoni roboti šire konveksni omotač\;
+    izvrši lokalnu proveru završetka faze pomoću brojača\;
+}
+
+\textbf{Faza 2: Biranje vođe}
+
+izračunaj težište konveksnog omotača $c$ i rastojanje $d$ do najudaljenijeg robota\;
+formiraj kružnicu sa centrom $c$ i poluprečnikom $d$\;
+kandidati $\leftarrow$ roboti na kružnici\;
+
+\While{broj kandidata $\neq 1$}{
+    svaki kandidat nezavisno baca novčić sa verovatnoćom $\frac{1}{k}$\;
+    neuspešni kandidati se privremeno pomeraju ka unutrašnjosti kruga\;
+    \If{broj preostalih kandidata $\neq 1$}{
+        svi kandidati se vraćaju na kružnicu\;
+    }
+}
+
+vođa $\leftarrow$ jedini preostali kandidat\;
+
+\textbf{Faza 3: Formiranje ciljnog obrasca}
+
+skaliraj ciljni obrazac i odredi konačne ciljne pozicije\;
+odredi redosled robota $r_1,\dots,r_{n-1}$ i pozicija $p_1,\dots,p_k$\;
+
+\For{$i = 1$ \KwTo $k$}{
+    vođa vodi robota $r_i$ ka poziciji $p_i$ svojim kretanjem\;
+}
+
+vođa prelazi na svoju završnu poziciju\;
+
+\end{algorithm}
+
+\subsection{Uspostavljanje međusobne vidljivosti}
+U prvoj fazi algoritma se od proizvoljne početne pozicije roboti premeštaju tako da svaki robot vidi sve ostale robote. Ideja ove faze zasniva se na geometrijskoj činjenici da će roboti postati međusobno vidljivi ako se svi nađu na temenima konveksnog omotača svog trenutnog rasporeda.   
+
+U svakom trenutku posmatra se konveksni omotač trenutnog rasporeda robota. Roboti koji se nalaze na temenima konveksnog omotača nazivaju se ugaoni roboti, inače se nazivaju unutrašnji roboti.
+
+Algoritam se izvršava u rundama. Unutrašnji roboti se postepeno pomeraju ka ivicama konveksnog omotaća i prolaze kroz izabranu ivicu kako bi izašli na spoljnu stranu omotača i postali ugaoni, dok ugaoni roboti šire konveksni omotač, produžujući njegove ivice i time omogućavajući da unutrašnji roboti bez sudara dospeju na njegovu ivicu. Unutrašnji robot razmatra skup ivica konveksnog omotača kojima je on najbliži i iz tog skupa bira sebi najbližu ivicu, ka kojoj se zatim pomera čime se garantuje da se roboti neće sudariti.
+
+Specijalan slučaj predstavlja situacija u kojoj robot koji je teme konveksnog omotača može pogrešno zaključiti da su svi roboti već u konveksnoj poziciji, iako još uvek postoji unutrašnji robot koji mu je zaklonjen drugim robotom. Kako bi se sprečio prerano završavanje faze, uveden je mehanizam lokalne provere pomoću brojača koji garantuje ispravnost završetka ove faze. Jedan ovakav slučaj je prikazan na slici~\ref{zaklonjenost}, gde robot $r_i$ zbog zaklonjene vidljivosti pogrešno zaključuje da su roboti u konveksnoj poziciji.
+
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.25\textwidth]{zaklonjena_vidljivost.png}
+\caption{Primer konfiguracije u kojoj ugaoni robot pogrešno zaključuje da su svi roboti u konveksnoj poziciji zbog zaklonjene vidljivosti.}
+\label{zaklonjenost}
+\end{figure}
+
+Pošto se razmatrani algoritam oslanja na rezultate iz ranijeg rada istih autora o problemu međusobne vidljivosti \cite{Alsaedi2023}, glavni delovi dokaza mogu se pronaći u tom radu, dok se u analiziranom radu ističu razlike u modelu robota, jer se raniji rad zasniva na modelu sa upotrebom svetala. Na osnovu te analize, pokazano je da faza uspostavljanja međusobne vidljivosti ima istu asimptotsku složenost kao u originalnom algoritmu, gde je $n$ broj robota:
+\begin{theorem}
+\label{teorema_vidljivost}
+Faza uspostavljanja međusobne vidljivosti završava se za $O(n)$ rundi, bez sudara i uz korišćenje konstantne količine memorije po robotu.
+\end{theorem}
+
+\subsection{Biranje vođe}
+
+Nakon što je uspostavljena međusobna vidljivost, roboti znaju koliki je njihov ukupan broj. Ukoliko je taj broj manji od broja robota potrebnih za formiranje obrasca algoritam se završava, inače se prelazi na fazu biranja vođe.
+
+Poznato je da problem izbora vođe u anonimnim distribuiranim sistemima ne može biti rešen determinističkim algoritmom \cite{Attiya}. Zbog toga autori predlažu slučajni algoritam zasnovan na protokolu \textit{slotted-Aloha} \cite{Vaidyanathan}.
+
+Na početku ove faze svi roboti izračunavaju težište $c$ konveksnog omotača i rastojanje $d$ do robota koji je najudaljeniji od tog težišta, nakon čega se formira krug sa centrom u $c$ i poluprečnikom $d$.
+
+
+Kandidati za vođu su oni roboti koji se nalaze na ovako formiranoj kružnici. Za biranje vođe se primenljuje sledeći postupak: 
+\begin{itemize}
+\item Svi kandidati nazavisno ,,bacaju novčić'' sa verovatnoćom uspeha $\frac{1}{k}$, gde je $k$ ukupan broj kandidata.
+\item Ako je becanje novčića uspešno, kandidat ostaje na kružnici.
+\item  Inače, kandidat pamti svoju poziciju i pomera se ka unutrašnjosti kruga, vodeći računa da ne naruši konveksnost rasporeda.
+\end{itemize}
+Ako je na kružnici ostao tačno jedan robot, on se proglašava vođom i ova faza se završava, inače se svi roboti kandidati vraćaju na kružnicu i postupak se ponavlja. Ovaj postupak je ilustrovan na slici \ref{vodja}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.6\textwidth]{izbor_vođe.png}
+\caption{Primer faze izbora vođe: (a) izračunavaju se težište $c$ i rastojanje $d$ i na osnovu njih se formira krug, (b) neuspešna iteracija u kojoj na kružnici ostaju dva robota, i (c) uspešna iteracija u kojoj se bira vođa i faza se završava.}
+\label{vodja}
+\end{figure}
+
+Faza izbora vođe u potpuno sinhronom modelu zahteva najviše onoliko rundi koliko zahteva i odgovarajući algoritam u asinhronom modelu, čija je složenost analizirana u radu \textit{On fast pattern formation by autonomous robots} \cite{Vaidyanathan}. Na osnovu te analize, u ovom radu se navodi sledeća teorema, gde $n$ označava ukupan broj robota u sistemu, a $q>0$ proizvoljnu konstantu kojom se kontroliše verovatnoća uspeha algoritma i koja direktno utiče na broj rundi izvršavanja:
+\begin{theorem}
+\label{teorema_vođa}
+Za svako $q > 0$, faza izbora vođe završava se za $O(q \log n)$ rundi, sa verovatnoćom najmanje $1 - n^{-q}$, bez sudara i uz korišćenje $O(1)$ memorije po robotu.
+\end{theorem}
+
+\subsection{Formiranje ciljnog obrasca}
+
+U završnoj fazi algoritma roboti se raspoređuju tako da formiraju zadati ciljni obrazac. Nakon izbora vođe, svi ostali roboti usklađuju svoje kretanje sa njegovim. Pošto se vođa nalazi na ivici konveksnog omotača, uvek postoji bar jedan njegov kvadrant bez robota koji se koristi za bezbedno izvođenje ove faze.
+
+Vođa ciljni obrazac skalira kako bi se obezbedilo dovoljno prostora između robota tokom kretanja i time izbegli sudari. Zatim, uvodi sopstveni koordinatni sistem i određuje redosled robota $r_1,\ldots,r_{n-1}$ i odgovarajuće ciljne pozicije $p_1,\ldots,p_k$ i vodi jednog po jednog robota do njihovih ciljnih pozicija. Pošto direktna komunikacija nije dozvoljena, instrukcije se prenose isključivo kretanjem vođe: u prvoj rundi robot određuje pravac kretanja posmatrajući položaj vođe, a u sledećoj rundi pamti pređeno rastojanje vođe, nakon čega se pomera na odgovarajuću poziciju. Proces se završava kada svi roboti zauzmu svoje ciljne pozicije, nakon čega vođa prelazi na svoju završnu poziciju.
+
+
+\begin{theorem}
+\label{teorema_formiranje_obrasca}
+Faza formiranja obrasca završava se za $O(n)$ rundi, bez sudara, u potpuno sinhronom modelu uz korišćenje $O(1)$ memorije po robotu.
+\end{theorem}
+
+Na osnovu rezultata dobijenih u svakoj od faza, odnosno na osnovu teorema: \ref{teorema_vidljivost}, \ref{teorema_vođa} i \ref{teorema_formiranje_obrasca} sledi završna teorema, gde je $q > 0$ proizvoljna konstanta koja određuje verovatnoću uspeha algoritma.
+\begin{theorem}
+Problem formiranja obrasca za $n$ robota sa fizičkom dimenzijom rešava se u $O(n) + O(q \log n)$ rundi, sa verovatnoćom najmanje $1 - n^{-q}$, bez sudara, u potpuno sinhronom modelu uz korišćenje $O(1)$ memorije po robotu.
+\end{theorem}
+
+\section{Zaključak}
+
+U ovom radu razmatran je problem formiranja obrazaca u sistemima autonomnih mobilnih robota sa fizičkom dimenzijom i zaklonjenom vidljivošću.
+Većina drugih radova koji rešavaju problem formiranja obrazaca razmatra pojednostavljeni model u kome su roboti predstavljeni kao bezdimenzione tačke, dok ovaj rad razmatra slučaj kada roboti imaju fizičku dimenziju i mogu međusobno zaklanjati vidljivost. Ovakav model robota otežava koordinaciju, ali bolje odgovara realnim uslovima.
+Neki prethodni radovi razmatrali su model robota sa svetlima (eng. \textit{luminous robots}), u kome roboti poseduju spolja vidljivo svetlo koje može da poprimi boje iz unapred definisanog skupa i služi kao sredstvo komunikacije. 
+Najbliži ovom radu su pristupi koji razmatraju debele robote u asinhronom okruženju uz korišćenje robota sa svetlima i uz pretpostavku da roboti mogu da se dogovore o jednoj osi koordinatnog sistema. Takva rešenja zahtevaju dodatne pretpostavke i veću količinu memorije.
+Suprotno tome, rad koji je predmet ovog seminarskog rada ne koristi robote sa svetlima, ne zahteva dogovor o koordinatnom sistemu i funkcioniše u potpuno sinhronom modelu, uz korišćenje samo konstantne količine memorije po robotu. Problem formiranja obrazaca ima značajne praktične primene, uključujući pokrivanje prostora, istraživanje okruženja, detekciju uljeza i razbijanje simetrije u distribuiranim sistemima, pa su samim tim rezultati ovog rada primenljivi u tim oblastima.
+
+\bibliographystyle{plainurl}
+\bibliography{literatura}
+
+
+\end{document}
